@@ -12,7 +12,7 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: 'index',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -20,7 +20,11 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Satoshi_Light: require('../assets/fonts/satoshi/Satoshi_Light.otf'),
+    Satoshi_Regular: require('../assets/fonts/satoshi/Satoshi_Regular.otf'),
+    Satoshi_Medium: require('../assets/fonts/satoshi/Satoshi_Medium.otf'),
+    Satoshi_Black: require('../assets/fonts/satoshi/Satoshi_Black.otf'),
+    Satoshi_Bold: require('../assets/fonts/satoshi/Satoshi_Bold.otf'),
     ...FontAwesome.font,
   });
 
@@ -48,9 +52,7 @@ function RootLayoutNav() {
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
+        <Stack.Screen name="index" options={{ title: "Home", headerShown: false }}/></Stack>
     </ThemeProvider>
   );
 }
