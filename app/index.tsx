@@ -1,4 +1,4 @@
-import { View, Text, useThemeColor } from "../components/Themed";
+import { View, Text } from "../components/Themed";
 import { RegularButton, TextWithIcon } from "../components/shared/buttons";
 import {FontAwesome5, Ionicons} from '@expo/vector-icons'
 import styles from "./stylesheet";
@@ -7,7 +7,7 @@ import TextField from "../components/shared/textfield";
 import Colors from "../constants/Colors";
 import { RPP } from "../utils";
 import { useState } from "react";
-import { KeyboardAvoidingView, Image } from "react-native";
+import { KeyboardAvoidingView, Image, Pressable } from "react-native";
 import { useThemeColorDefault } from "../components/Themed";
 
 export default function AuthScreen() {
@@ -23,7 +23,8 @@ export default function AuthScreen() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [isLoading, setIsLoading] = useState(false)
-    const [currentScreen, setCurrentScreen] = useState(screens.login2)
+    const [currentScreen, setCurrentScreen] = useState(screens.login)
+    const [isPasswordHidden, setIsPasswordHidden] = useState(true)
 
 
     const onButtonClick = () => {
@@ -42,7 +43,7 @@ export default function AuthScreen() {
 
     return (
         <View style={templateStyles.wrapper}>
-            <View style={[styles.container, {display: `${screens.login ? "none" : "flex"}`, justifyContent: 'flex-end'}]}>
+            <View style={[styles.container, {display: `${currentScreen === screens.login ? "flex" : "none"}`, justifyContent: 'flex-end'}]}>
                 <View style={styles.container2}>
                     <View>
                         <View style={[templateStyles.buttonSize]}>
@@ -111,11 +112,15 @@ export default function AuthScreen() {
             </View>
 
 
-            <View style={[styles.container, {display: `${screens.login2 ? "flex" : "none"}`}]}>
+            <View style={[styles.container, {display: `${currentScreen === screens.login2 ? "flex" : "none"}`}]}>
                 <View style={[styles.container3, {justifyContent:"flex-start", flexDirection:"row"}]}>
-                    <View style={[styles.backBtnBorder, {borderColor}]}>
-                        <Ionicons name="chevron-back" style={{color, fontSize: RPP(25)}}/>
-                    </View>
+                    <Pressable
+                        onPress={() => {setCurrentScreen(screens.login)}}
+                    >
+                        <View style={[styles.backBtnBorder, {borderColor}]}>
+                            <Ionicons name="chevron-back" style={{color, fontSize: RPP(25)}}/>
+                        </View>
+                    </Pressable>
                 </View>
                 <View style={styles.container2}>
                     <Text style={styles.heading}>Sign in to Contentor</Text>
@@ -137,6 +142,10 @@ export default function AuthScreen() {
                             value={password}
                             onValueChange= {(newValue: any) => setPassword(newValue)}
                             isPassword={true}
+                            isPasswordHidden={isPasswordHidden}
+                            onPasswordToggle={() => {
+                                setIsPasswordHidden(!isPasswordHidden)
+                            }}
                         />
                     </View>
                     <Text style={{color:tint, fontSize: RPP(15), fontFamily:"Satoshi_Medium"}}>Forgot password?</Text>
@@ -147,13 +156,15 @@ export default function AuthScreen() {
                                 isLoading={isLoading}
                                 onPress={() => {onButtonClick()}}
                             />
-                        </View>
-                <View style={[styles.container2, {marginTop:RPP(30), marginBottom: RPP(20)}]}>
+                </View>
+                <View style={[styles.container2, {marginBottom: RPP(20), flex:1, flexDirection:"row", alignItems:"flex-end"} ]}>
                     <Text style={{lineHeight:RPP(20), color:"darkgrey", fontSize: RPP(15), fontFamily:"Satoshi_Medium"}}>Don't have an account? 
                         <Text style={{color:tint, fontSize: RPP(15), fontFamily:"Satoshi_Medium"}}> Sign up</Text>
                     </Text>             
                 </View>
             </View>
+
+
         </View>
     )
 }

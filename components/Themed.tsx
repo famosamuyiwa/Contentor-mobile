@@ -38,12 +38,14 @@ export function useThemeColorDefault(){
   const tintColor = useThemeColor({}, 'tint');
   const backgroundColor = useThemeColor({}, 'background');
   const borderColor = useThemeColor({}, 'borderColor');
+  const iconColor = useThemeColor({}, 'text');
 
   return {
     textColor,
     tintColor,
     backgroundColor,
-    borderColor
+    borderColor,
+    iconColor
   }
 }
 
