@@ -11,7 +11,8 @@ export default {
     buttonText:'#fff',
     buttonBackground: tintColorLight,
     focus: tintColorLight,
-    borderColor: '#ccc'
+    borderColor: '#ccc',
+    buttonBackgroundInactive: "#ccc"
   },
 
   dark: {
@@ -20,9 +21,10 @@ export default {
     tint: tintColorDark,
     tabIconDefault: '#ccc',
     tabIconSelected: tintColorDark,
-    buttonText:'#000',
+    buttonText:'#fff',
     buttonBackground: tintColorDark,
     focus: tintColorDark,
-    borderColor: '#ccc'
+    borderColor: '#ccc',
+    buttonBackgroundInactive: "#a1a1a1"
   },
 };

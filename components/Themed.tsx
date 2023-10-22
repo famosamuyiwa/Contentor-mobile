@@ -7,7 +7,7 @@ import { Text as DefaultText, useColorScheme, View as DefaultView, TextInput as 
 
 import Colors from '../constants/Colors';
 import { RPP } from '../utils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type ThemeProps = {
   lightColor?: string;
@@ -16,7 +16,7 @@ type ThemeProps = {
 
 export type TextProps = ThemeProps & DefaultText['props'] 
 export type DefaultTextInputProps = ThemeProps & DefaultTextInput['props'] & {lightFocusColor?: string, darkFocusColor?: string}
-export type ViewProps = ThemeProps & DefaultView['props'];
+export type ViewProps = ThemeProps & DefaultView['props'] & {isActive?: boolean}
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
@@ -39,13 +39,17 @@ export function useThemeColorDefault(){
   const backgroundColor = useThemeColor({}, 'background');
   const borderColor = useThemeColor({}, 'borderColor');
   const iconColor = useThemeColor({}, 'text');
+  const buttonTextColor = useThemeColor({}, 'buttonText');
+  const borderColorFocused = useThemeColor({}, 'focus')
 
   return {
     textColor,
     tintColor,
     backgroundColor,
     borderColor,
-    iconColor
+    iconColor,
+    buttonTextColor,
+    borderColorFocused
   }
 }
 
@@ -56,6 +60,8 @@ export function Text(props: TextProps) {
 
   return <DefaultText style={[ { color }, {fontSize:RPP(14)}, {fontFamily: "Satoshi_Regular"}, style]} {...otherProps} />;
 }
+
+
 export function TextInput(props: DefaultTextInputProps) {
 
 
@@ -65,7 +71,6 @@ export function TextInput(props: DefaultTextInputProps) {
   const borderColorFocused = useThemeColor({ light: lightFocusColor, dark: darkFocusColor}, 'focus')
 
   const [borderColor, setBorderColor] = useState(borderColorUnfocused)
-
 
   return <DefaultTextInput style={[ { borderColor } ,{ color }, {fontSize:RPP(14)}, {fontFamily: "Satoshi_Regular"}, style]} onFocus={() => {setBorderColor(borderColorFocused)}} onBlur={() => {setBorderColor(borderColorUnfocused)}} {...otherProps} />;
 }
@@ -77,8 +82,10 @@ export function View(props: ViewProps) {
   return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
 }
 export function Button(props: ViewProps) {
-  const { style, lightColor, darkColor, ...otherProps } = props;
-  const backgroundColor = useThemeColor({ light: lightColor, dark: darkColor }, 'buttonBackground');
+  const { style, lightColor, darkColor, isActive, ...otherProps } = props;
+  const backgroundColorActive = useThemeColor({ light: lightColor, dark: darkColor }, 'buttonBackground');
+  const backgroundColorInactive = useThemeColor({ light: lightColor, dark: darkColor }, 'buttonBackgroundInactive');
+  
 
-  return <DefaultView style={[{ backgroundColor }, style]} {...otherProps} />;
+  return <DefaultView style={[{ backgroundColor: `${isActive? backgroundColorActive : backgroundColorInactive}` }, style]} {...otherProps} />;
 }

@@ -18,10 +18,10 @@ const TextWithIcon = ({text, icon} :any) => {
     )
 }
 
-const RegularButton = ({content, isLoading, onPress}: any) => {
+const RegularButton = ({content, isLoading, onPress, isActive}: any) => {
     return (
-        <TouchableOpacity onPress={onPress}>
-            <Button style={[styles.container, {borderWidth: 0}]}>
+        <TouchableOpacity onPress={isActive? onPress : ()=>{} }>
+            <Button style={[styles.container, {borderWidth: 0}]} isActive={isActive}>
                 {
                     isLoading ? 
                     <MaterialIndicator
