@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Pressable, TextInput } from 'react-native'
 
 
-const TextField = ({label, isLabelVisible, placeholder, value, onValueChange, isPassword, isPasswordHidden, onPasswordToggle}: any) => {
+function TextField({label, isLabelVisible, placeholder, value, onValueChange, isPassword, isPasswordHidden, onPasswordToggle}: any){
     
     const {iconColor:color} = useThemeColorDefault()
 
@@ -19,7 +19,7 @@ const TextField = ({label, isLabelVisible, placeholder, value, onValueChange, is
                     autoCorrect={false}
                     placeholder={placeholder}
                     value={value}
-                    onChangeText= {(newValue:any) => onValueChange(newValue)}
+                    onChangeText= {function(newValue:any){ onValueChange(newValue) }}
                     secureTextEntry={isPasswordHidden}
                     
                 />
@@ -52,12 +52,12 @@ const OTPField = forwardRef<TextInput | null, any>(({label, isLabelVisible, plac
                     autoCorrect={false}
                     placeholder={placeholder}
                     value={value}
-                    onChangeText= {(newValue:any) => onValueChange(newValue)}
+                    onChangeText= {function(newValue:any){ onValueChange(newValue) }}
                     maxLength={1}
                     keyboardType="numeric" // Set the keyboard type to numeric
                     textContentType="oneTimeCode" // Set the text input mode (iOS)
-                    onFocus={() => {setBorderColor(borderColorFocused)}}
-                    onBlur={() => {setBorderColor(borderColorUnfocused)}}
+                    onFocus={function(){ setBorderColor(borderColorFocused) }}
+                    onBlur={function(){ setBorderColor(borderColorUnfocused) }}
                     onKeyPress={onKeyPress}
                 />
             </View>

@@ -12,7 +12,9 @@ export default {
     buttonBackground: tintColorLight,
     focus: tintColorLight,
     borderColor: '#ccc',
-    buttonBackgroundInactive: "#ccc"
+    buttonBackgroundInactive: "#ccc",
+    modalTitleBackground:"#fff",
+    modalContentBackground: "#fff",
   },
 
   dark: {
@@ -25,6 +27,8 @@ export default {
     buttonBackground: tintColorDark,
     focus: tintColorDark,
     borderColor: '#ccc',
-    buttonBackgroundInactive: "#a1a1a1"
+    buttonBackgroundInactive: "#a1a1a1",
+    modalTitleBackground: "#464C55",
+    modalContentBackground: "#25292e"
   },
 };

@@ -145,48 +145,48 @@ const OTPVerification = ({email, onBackBtn, onVerifyBtn, isLoading, isActive, is
                             <OTPField
                                 ref={inputField1Ref}
                                 value={inputField1}
-                                onValueChange= {(newValue: any) => {
+                                onValueChange= {function(newValue: any){
                                     focusInput()
                                     setInputField1(newValue)
                                     }
                                 } 
-                                onKeyPress={(e:any) => (handleKeyPress(e))}
+                                onKeyPress={function(e:any){ handleKeyPress(e) }}
                             />
                         </View>
                         <View style={styles.otpInput}>
                             <OTPField
                                ref={inputField2Ref}
                                value={inputField2}
-                               onValueChange= {(newValue: any) => { 
+                               onValueChange= {function(newValue: any){ 
                                     focusInput()
                                     setInputField2(newValue)
                                     }
                                 } 
-                                onKeyPress={(e:any) => (handleKeyPress(e))}
+                                onKeyPress={function(e:any){ handleKeyPress(e) }}
                             />
                         </View>
                         <View style={styles.otpInput}>
                             <OTPField
                                 ref={inputField3Ref}
                                 value={inputField3}
-                                onValueChange= {(newValue: any) => {
+                                onValueChange= {function(newValue: any){
                                     focusInput()
                                     setInputField3(newValue)
                                     }
                                 } 
-                                onKeyPress={(e:any) => (handleKeyPress(e))}
+                                onKeyPress={function(e:any){ handleKeyPress(e) }}
                             />
                         </View>
                         <View style={styles.otpInput}>
                             <OTPField
                                 ref={inputField4Ref}
                                 value={inputField4}
-                                onValueChange= {(newValue: any) => {
+                                onValueChange= {function(newValue: any){
                                     focusInput()
                                     setInputField4(newValue)
                                     } 
                                 }
-                                onKeyPress={(e:any) => (handleKeyPress(e))}
+                                onKeyPress={function(e:any){ handleKeyPress(e) }}
                             />
                         </View>
                     </View>
@@ -204,7 +204,7 @@ const OTPVerification = ({email, onBackBtn, onVerifyBtn, isLoading, isActive, is
                         </Text>
                     </View>
                     <View style={{alignItems:"center", marginVertical:RPP(20), display: `${remainingTime === "00:00" ? "flex" : "none"}`}}>
-                        <TouchableOpacity onPress={() => {
+                        <TouchableOpacity onPress={function(){
                                 clearTimeout(timeoutId)
                                 startTimer(1)
                             }}>

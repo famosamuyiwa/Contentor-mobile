@@ -5,7 +5,7 @@ import { View, Text, Button } from "../Themed";
 import { styles } from "../stylesheet/shared/buttons";
 import { MaterialIndicator } from 'react-native-indicators';
 
-const TextWithIcon = ({text, icon} :any) => {
+function TextWithIcon({text, icon} :any){
     return (
         <View style={[styles.container, {borderColor: "lightgrey"}]}>
             <View style={styles.container2}>
@@ -18,7 +18,7 @@ const TextWithIcon = ({text, icon} :any) => {
     )
 }
 
-const RegularButton = ({content, isLoading, onPress, isActive}: any) => {
+function RegularButton({content, isLoading, onPress, isActive}: any){
     return (
         <TouchableOpacity onPress={isActive? onPress : ()=>{} }>
             <Button style={[styles.container, {borderWidth: 0}]} isActive={isActive}>
