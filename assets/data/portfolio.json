@@ -1,0 +1,50 @@
+
+{
+    "user":{
+        "profilePicture":"https://th.bing.com/th/id/OIP.0QSiosoe-ckhHxeDxjKckAHaLH?w=202&h=303&c=7&r=0&o=5&dpr=1.5&pid=1.7"
+    },
+    "grid": [
+        {
+            "uri": "https://th.bing.com/th/id/OIP.QnAF4QfqzlEfIvJRzwLtXgHaEK?w=270&h=180&c=7&r=0&o=5&dpr=1.5&pid=1.7"
+        },
+        {
+            "uri": "https://th.bing.com/th/id/OIP.QkJZU8tBvrfqk6ty_UoHTgHaLq?w=120&h=188&c=7&r=0&o=5&dpr=1.5&pid=1.7"
+        },
+        {
+            "uri": "https://th.bing.com/th/id/OIP.sxiP5HsIQbhez2UDza0flgHaFP?w=209&h=180&c=7&r=0&o=5&dpr=1.5&pid=1.7"
+        },
+        {
+            "uri": "https://th.bing.com/th/id/OIP.DxuCdUo4L6ACMZILmt6O7wHaEK?w=322&h=181&c=7&r=0&o=5&dpr=1.5&pid=1.7"
+        },
+        {
+            "uri": "https://th.bing.com/th/id/OIP.zh4cjlIXADtdzUUoX14jQQHaHl?w=174&h=180&c=7&r=0&o=5&dpr=1.5&pid=1.7"
+        }
+    ],
+    "folder": [
+        {
+            "title": "Artificial Intelligence",
+            "uri": "https://miro.medium.com/max/1572/0*R85PRdnfHI9eppdu.jpg"
+            
+        },
+        {
+            "title": "Starboy Project",
+            "uri": "https://th.bing.com/th/id/OIP.IPW3a4hRDNnsOUfyvCiPQgHaHa?w=176&h=180&c=7&r=0&o=5&dpr=1.5&pid=1.7"
+            
+        },
+        {
+            "title": "My Mixtape",
+            "uri": "https://th.bing.com/th/id/OIP.JPjh_K7hBJFiu4pIfP5cfQHaFM?w=268&h=188&c=7&r=0&o=5&dpr=1.5&pid=1.7"
+            
+        },
+        {
+            "title": "Artificial Intelligence",
+            "uri": "https://miro.medium.com/max/1572/0*R85PRdnfHI9eppdu.jpg"
+            
+        },
+        {
+            "title": "Artificial Intelligence",
+            "uri": "https://miro.medium.com/max/1572/0*R85PRdnfHI9eppdu.jpg"
+            
+        }
+    ]
+}

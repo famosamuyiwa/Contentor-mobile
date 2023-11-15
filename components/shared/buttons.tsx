@@ -1,4 +1,4 @@
-import { TouchableOpacity } from "react-native-gesture-handler";
+import { TouchableOpacity } from "react-native";
 import Colors from "../../constants/Colors";
 import { RPP } from "../../utils";
 import { View, Text, Button } from "../Themed";

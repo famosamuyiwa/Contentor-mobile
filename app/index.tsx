@@ -14,10 +14,14 @@ import * as Google from 'expo-auth-session/providers/google'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from 'expo-web-browser'
 import { SuccessModal } from "../components/shared/modals";
+import { useRouter } from "expo-router";
 
 WebBrowser.maybeCompleteAuthSession()
 
 export default function AuthScreen() {
+
+    const router = useRouter()
+
     const [userInfo, setUserInfo] = useState(null)
     const [request, response, promptAsync] = Google.useAuthRequest({
         androidClientId: "1068157340831-m7ipd80pcfqr7usoh6ad3kfei4jrdobb.apps.googleusercontent.com",
@@ -82,6 +86,7 @@ export default function AuthScreen() {
     const [isConfirmPasswordHidden, setIsConfirmPasswordHidden] = useState(true)
     const [isModal, setIsModal] = useState(false)
 
+
     // reset input fields on auth page switch
     useEffect(function(){
         if(currentScreen === screens.login || currentScreen === screens.signup || currentScreen === screens.forgotPassword || currentScreen === screens.resetPassword){
@@ -99,7 +104,7 @@ export default function AuthScreen() {
 
     //function to run when button is clicked
     function onButtonClick(){
-        
+
         setIsLoading(true)
 
         //simulate async function
@@ -111,7 +116,7 @@ export default function AuthScreen() {
                         setCurrentScreen(screens.login2)
                         break
                     case screens.login2:
-                        setCurrentScreen(screens.login2)
+                        router.replace('/profile')
                         break
                     case screens.signup:
                         setCurrentScreen(screens.otp)
@@ -132,7 +137,7 @@ export default function AuthScreen() {
                         setPreviousScreen(screens.login2)
                         break
                     case screens.resetPassword:
-                        setIsModal(true)
+                        password === confirmPassword ? setIsModal(true) : 0
                         break
                     default:
                         return
