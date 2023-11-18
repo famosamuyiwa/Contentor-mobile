@@ -8,5 +8,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "app/stylesheet/index.js"  ]
+, "app/stylesheet/index.js", "config/firebase.js"  ]
 }

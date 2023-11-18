@@ -4,6 +4,8 @@ import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import {Provider as ReduxProvider} from 'react-redux'
+import store from "../redux/store"
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -51,11 +53,13 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ReduxProvider store={store}>
       <Stack>
         <Stack.Screen name="index" options={{ title: "Home", headerShown: false }}/>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
         <Stack.Screen name="editProfile" options={{ headerShown: false, presentation:"modal" }}/>
       </Stack>
+      </ReduxProvider>
     </ThemeProvider>
   );
 }

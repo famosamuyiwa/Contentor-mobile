@@ -2,19 +2,35 @@ import { View, Text } from "../Themed";
 import { Image } from "expo-image";
 import { styles } from "../stylesheet/shared/portfolioItems";
 import { RPP } from "../../utils";
+import { Video } from "expo-av";
 
-function GridItem({uri, style}: any){
+function GridItem({uri, style, type}: any){
     return (
         <View style={[styles.imageWrapper, {...style}]}>
+            {(type === "image") &&
              <Image
                 source={{uri}}
                 style={styles.image}
             />
+            }
+            {(type === "video") &&
+                <Video 
+                    source= {{uri}}
+                    style={styles.video}
+                    videoStyle={{}}
+                    rate={1.0}
+                    volume={1.0}
+                    isMuted={false}
+                    shouldPlay={false}
+                    isLooping={false}
+                    // useNativeControls
+                />
+            }
         </View>
     )
 }
 
-function FolderItem({title, uri, style}: any){
+function ListItem({title, uri, style}: any){
     return (
         <View style={[styles.folderContainer, {...style}]}>
             <View style={styles.imageWrapper2}>
@@ -32,5 +48,5 @@ function FolderItem({title, uri, style}: any){
 
 export {
     GridItem,
-    FolderItem
+    ListItem
 }

@@ -7,6 +7,11 @@ export const styles = StyleSheet.create({
         height:"100%",         
         borderRadius: RPP(10),
     },
+    video:{
+        width:"100%",
+        height:"100%",         
+        borderRadius: RPP(10),
+    },
     imageWrapper:{
         width:"31%",
         height:RPP(200)

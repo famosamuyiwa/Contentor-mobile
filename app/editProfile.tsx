@@ -3,11 +3,17 @@ import styles from './stylesheet/editProfile'
 import { Image } from "expo-image";
 import { MaterialIcons } from '@expo/vector-icons'
 import { RPP } from '../utils';
-import { KeyboardAvoidingView, Pressable, TouchableOpacity } from 'react-native';
+import { Alert, KeyboardAvoidingView, Pressable, TouchableOpacity } from 'react-native';
 import { TitleWithInputField } from '../components/shared/title-with-inputfield';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {  useRouter } from 'expo-router';
+import { auth, database } from '../config/firebase';
+import { updateProfile } from 'firebase/auth';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
+import { User } from '../redux/slices/userSlice';
+import { collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 
 export default function EditProfile() {
   const {tintColor} = useThemeColorDefault()
@@ -20,6 +26,12 @@ export default function EditProfile() {
     profession: ""
   })
   const router = useRouter()
+  const user = auth.currentUser
+
+
+  const userDetails: User = useSelector((state: RootState) => state.user.user[0]) || [];
+  const loading = useSelector((state: RootState) => state.user.loading);
+  const error = useSelector((state: RootState) => state.user.error);
 
   const pickImage = async () => {
     // No permissions request is necessary for launching the image library
@@ -36,6 +48,46 @@ export default function EditProfile() {
   };
 
 
+const updateUserProfile = async () => {
+  if (user) {
+    const userRef = collection(database, 'users');
+    const q = query(userRef, where("userId", "==", user.uid));
+
+    try {
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const docRef = doc(database, 'users', querySnapshot.docs[0].id);
+        await updateDoc(docRef, { 
+            ...information
+         });
+        console.log("success")
+        router.back()
+      } else {
+        Alert.alert("Error Updating Profile");
+      }
+    } catch (error:any) {
+      Alert.alert("Error Updating Profile", error.message);
+    }
+  }
+};
+
+
+  useEffect(() => {
+    if(user){
+      userDetails.displayPicture ? setImage(userDetails.displayPicture) : setImage('')
+      setInformation({
+        username: userDetails.username,
+        name: userDetails.name, 
+        bio: userDetails.bio || "",
+        link: userDetails.link || "",
+        profession: userDetails.profession || ""
+      });
+
+    }
+  }, [])
+
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -45,9 +97,9 @@ export default function EditProfile() {
         <View>
           <Text style={styles.headerText}>Edit Profile</Text>
         </View>
-        <View style={styles.headerActionContainer}>
+        <Pressable onPress={() => { updateUserProfile() }} style={styles.headerActionContainer}>
           <Text style={[styles.headerActionText, {textAlign:"right", color: tintColor}]}>Save</Text>
-        </View>
+        </Pressable>
       </View>
       <View style={styles.profileImageContainer}>
         <TouchableOpacity onPress={() => pickImage()} style={{display: image !== '' ? 'flex' : 'none'}}>
@@ -67,7 +119,8 @@ export default function EditProfile() {
         <TitleWithInputField 
           title="Username" 
           inputStyle={{borderBottomWidth: RPP(0.4)}}
-          value={information.username}
+          value={"@"+information.username}
+          isEditable={false}
           onValueChange= {function(newValue: any){ setInformation({...information, username: newValue}) }}
           />
         <TitleWithInputField 

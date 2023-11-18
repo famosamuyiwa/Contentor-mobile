@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { Pressable, TextInput } from 'react-native'
 
 
-function TextField({label, isLabelVisible, placeholder, value, onValueChange, isPassword, isPasswordHidden, onPasswordToggle}: any){
+function TextField({label, isLabelVisible, placeholder, value, onValueChange, isPassword, isPasswordHidden, onPasswordToggle, isEditable}: any){
     
     const {iconColor:color} = useThemeColorDefault()
 
@@ -21,7 +21,7 @@ function TextField({label, isLabelVisible, placeholder, value, onValueChange, is
                     value={value}
                     onChangeText= {function(newValue:any){ onValueChange(newValue) }}
                     secureTextEntry={isPasswordHidden}
-                    
+                    editable={isEditable}
                 />
                 <Pressable onPress={onPasswordToggle} style={styles.passwordVisibilityIcon}>
                     <View style={{display: `${isPassword? 'flex' : 'none'}`}}>

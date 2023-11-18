@@ -4,7 +4,7 @@ import { styles } from "../stylesheet/shared/title-with-inputfield";
 import { RPP } from "../../utils";
 
 
-function TitleWithInputField({title, inputStyle, placeholder, onValueChange, value}: any){
+function TitleWithInputField({title, inputStyle, placeholder, onValueChange, value, isEditable}: any){
     return (
         <View style={styles.container}>
             <View style={styles.titleWrapper}>
@@ -17,6 +17,7 @@ function TitleWithInputField({title, inputStyle, placeholder, onValueChange, val
                       autoCorrect={false}
                       placeholder={placeholder}
                       value={value}
+                      editable={isEditable}
                       onChangeText= {function(newValue:any){ onValueChange(newValue) }}
                     />
             </View>

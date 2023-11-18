@@ -6,61 +6,26 @@ import templateStyles from "./stylesheet/template";
 import {TextField} from "../components/shared/textfield";
 import Colors from "../constants/Colors";
 import { RPP } from "../utils";
-import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Image, Pressable, TouchableOpacity, Platform } from "react-native";
+import { createContext, useContext, useEffect, useState } from "react";
+import { KeyboardAvoidingView, Image, Pressable, TouchableOpacity, Platform, ActivityIndicator, Alert } from "react-native";
 import { useThemeColorDefault } from "../components/Themed";
 import OTPVerification from "../components/shared/otp-verification";
-import * as Google from 'expo-auth-session/providers/google'
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as WebBrowser from 'expo-web-browser'
 import { SuccessModal } from "../components/shared/modals";
 import { useRouter } from "expo-router";
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth, database } from "../config/firebase";
+import { addDoc, collection } from "firebase/firestore";
+import { fetchUserDetails } from "../redux/thunks/userThunk";
+import { Dispatch } from "@reduxjs/toolkit";
+import { useDispatch } from "react-redux";
 
 WebBrowser.maybeCompleteAuthSession()
 
 export default function AuthScreen() {
 
     const router = useRouter()
-
-    const [userInfo, setUserInfo] = useState(null)
-    const [request, response, promptAsync] = Google.useAuthRequest({
-        androidClientId: "1068157340831-m7ipd80pcfqr7usoh6ad3kfei4jrdobb.apps.googleusercontent.com",
-        iosClientId: "1068157340831-j2vfidg72d9t42blc6orvfvhh751jm56.apps.googleusercontent.com",
-        webClientId: "1068157340831-h46a15ouplrt6tp3sltht5mptpr846q2.apps.googleusercontent.com",
-    })
-
-    useEffect(() => {
-        handleSignInWithGoogle()
-    }, [response])
-
-    async function handleSignInWithGoogle(){
-        const user = await AsyncStorage.getItem("@user")
-        if(!user){
-            if(response?.type === "success"){
-                await getUserInfo(response.authentication?.accessToken)
-            }
-        }else{
-            setUserInfo(JSON.parse(user))
-        }
-    }
-
-    async function getUserInfo(token:any){
-        if(!token) return
-        try{
-            const response = await fetch(
-                "https://www.googleapis.com/userinfo/v2/me",
-                {
-                    headers: {Authorization: `Bearer ${token}`}
-                }
-            )
-
-            const user = await response.json()
-            await AsyncStorage.setItem("@user", JSON.stringify(user))
-            setUserInfo(user)
-        }catch(error){
-
-        }
-    }
+    const dispatch: Dispatch<any> = useDispatch();
 
     //get theme scheme to use default colors
     const {textColor:color, tintColor:tint, backgroundColor:bgColor, borderColor} = useThemeColorDefault()
@@ -107,45 +72,99 @@ export default function AuthScreen() {
 
         setIsLoading(true)
 
-        //simulate async function
-        setTimeout(() => {
-            setIsLoading(false)
-            if(true){
-                switch(currentScreen){
-                    case screens.login:
-                        setCurrentScreen(screens.login2)
-                        break
-                    case screens.login2:
-                        router.replace('/profile')
-                        break
-                    case screens.signup:
-                        setCurrentScreen(screens.otp)
-                        setPreviousScreen(screens.signup)
-                        break
-                    case screens.signup2:
-                        setCurrentScreen(screens.signup2)
-                        break
-                    case screens.otp:
-                        previousScreen === screens.signup ? setCurrentScreen(screens.signup2) : setCurrentScreen(screens.resetPassword)
-                        break
-                    case screens.forgotPassword:
-                        setCurrentScreen(screens.otp)
-                        setPreviousScreen(screens.login2)
-                        break
-                    case screens.forgotPassword:
-                        setCurrentScreen(screens.otp)
-                        setPreviousScreen(screens.login2)
-                        break
-                    case screens.resetPassword:
-                        password === confirmPassword ? setIsModal(true) : 0
-                        break
-                    default:
-                        return
-                }
-            }
-        }, 3000)    
-
+        switch(currentScreen){
+            case screens.login:
+                setCurrentScreen(screens.login2)
+                setIsLoading(false)
+                break
+            case screens.login2:
+                onHandleLogin()
+                break
+            case screens.signup:
+                setCurrentScreen(screens.otp)
+                setPreviousScreen(screens.signup)
+                setIsLoading(false)
+                break
+            case screens.signup2:
+                onHandleSignup()
+                break
+            case screens.otp:
+                previousScreen === screens.signup ? setCurrentScreen(screens.signup2) : setCurrentScreen(screens.resetPassword)
+                setIsLoading(false)
+                break
+            case screens.forgotPassword:
+                setCurrentScreen(screens.otp)
+                setPreviousScreen(screens.login2)
+                setIsLoading(false)
+                break
+            case screens.forgotPassword:
+                setCurrentScreen(screens.otp)
+                setPreviousScreen(screens.login2)
+                setIsLoading(false)
+                break
+            case screens.resetPassword:
+                password === confirmPassword ? setIsModal(true) : 0
+                setIsLoading(false)
+                break
+            default:
+                return
+        }
     }
+
+    async function onHandleLogin() {
+        if (email !== "" && password !== "") {
+          try {
+            const userCredentials = await signInWithEmailAndPassword(auth, email, password);
+      
+            // Wait for user details to finish fetching
+            await dispatch(fetchUserDetails(userCredentials.user.uid || ""));
+      
+            // Once user details are fetched, navigate to the profile screen
+            router.replace('/profile');
+            setIsLoading(false);
+          } catch (err:any) {
+            setIsLoading(false);
+            return Alert.alert("Signin error", err.message);
+          }
+        }
+      }
+      
+
+    async function onHandleSignup() {
+        if (email !== "" && password !== "") {
+          try {
+            const userCredentials = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredentials.user;
+      
+            // Update the user's profile display name
+            await updateProfile(user, { displayName: username });
+      
+            // Add user to users collection
+            await addDoc(collection(database, 'users'), {
+              userId: auth.currentUser?.uid,
+              username,
+              name
+            });
+      
+            // Fetch user details and proceed to profile screen
+            await dispatch(fetchUserDetails(userCredentials.user.uid || ""));
+            router.replace('/profile');
+            setIsLoading(false);
+          } catch (err:any) {
+            setIsLoading(false);
+            if (err.code === "auth/email-already-in-use") {
+              return Alert.alert("Signup error", "The email address is already in use.");
+            } else {
+              return Alert.alert("Signup error", err.message);
+            }
+          }
+        }
+      }
+      
+
+
+
+
 
     return (
         
@@ -164,7 +183,7 @@ export default function AuthScreen() {
                             />
                             </View>
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={function(){ promptAsync() }}>
+                        <TouchableOpacity onPress={()=>{}}>
                             <View style={[templateStyles.buttonSize]}>
                                 <TextWithIcon 
                                     icon={<Image
