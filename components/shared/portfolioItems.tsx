@@ -11,6 +11,7 @@ function GridItem({uri, style, type}: any){
              <Image
                 source={{uri}}
                 style={styles.image}
+                contentFit="contain"
             />
             }
             {(type === "video") &&
