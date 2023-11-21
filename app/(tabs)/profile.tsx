@@ -13,31 +13,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserDetails } from '../../redux/thunks/userThunk';
 import { Dispatch } from '@reduxjs/toolkit';
 import { RootState } from '../../redux/store';
-import { User } from '../../redux/slices/userSlice';
-import { FadeInViewToggled } from '../../components/shared/animations';
 import { useFocusEffect } from '@react-navigation/native';
 import * as MediaPicker from 'expo-image-picker';
 import Multimedia from '../../constants/Media';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import UploadOverlay from '../../components/shared/upload-overlay-mock';
-import { addDoc, collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, onSnapshot, orderBy, query, updateDoc, where } from 'firebase/firestore';
+import * as ImagePicker from 'expo-image-picker';
+import Default from '../../constants/Default';
+import Tabs from '../../constants/Tabs';
+
 
 export default function Profile() {
   const colorScheme = useColorScheme();
   const {tintColor, iconColor} = useThemeColorDefault()
   const userId = auth.currentUser?.uid
   const dispatch: Dispatch<any> = useDispatch();
-
-
-
-  const Tabs = {
-    GRID: "GRID",
-    LIST: "LIST"
-  }
-
-  const defaultAvatar = "https://res.cloudinary.com/dwjaqaekv/image/upload/v1700170556/default-avatar-profile-image-vector-social-media-user-icon-potrait-182347582_bnx4ef.jpg"
-
-
   const [currentTab, setCurrentTab] = useState(Tabs.GRID)
   const [image, setImage] = useState("")
   const [video, setVideo] = useState("")
@@ -49,6 +40,7 @@ export default function Profile() {
   const loading = useSelector((state: RootState) => state.user.loading);
   const error = useSelector((state: RootState) => state.user.error);
 
+  //refetch user details on screen show
   useFocusEffect(
     useCallback(() => {
       dispatch(fetchUserDetails(userId || ""));
@@ -58,7 +50,7 @@ export default function Profile() {
   useEffect(() => {
     //get data back immediately it has been saved to db
     const portfolioRef = collection(database, "portfolio")
-    const q = query(portfolioRef, orderBy('createdAt', 'asc'));
+    const q = query(portfolioRef, where("userId", "==", userId), orderBy('createdAt', 'asc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const newMedia: PortfolioItem[] = snapshot.docs.map((doc) => ({
@@ -142,18 +134,87 @@ export default function Profile() {
     }
   }
 
+  const pickHeader = async () => {
+    // No permissions request is necessary for launching the image library
+    let result:any = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      await uploadHeaderPicture({uri : result.assets[0].uri})
+    }
+  };
+
+    //save header picture to bucket and get uri
+    async function uploadHeaderPicture( details: any ) {
+      const response = await fetch(details.uri)
+      const blob = await response.blob()
+  
+      const storageRef = ref(storage, "Stuff/" + new Date().getTime())
+      const uploadTask = uploadBytesResumable(storageRef, blob)
+  
+      //listen for events
+      uploadTask.on("state_changed",
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          console.log("Progress: " + progress + "% done")
+        },
+        (error) => {
+          //handle error
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref)
+            .then(async (downloadUrl) => {
+              console.log("File available at ", downloadUrl)
+              //set display picture uri
+              updateHeader(downloadUrl)
+            })
+        }
+      )
+    }
+
+  //update header in db
+  const updateHeader = async (headerPicture : string) => {
+
+      const userRef = collection(database, 'users');
+      const q = query(userRef, where("userId", "==", userId));
+  
+      try {
+        const querySnapshot = await getDocs(q);
+  
+        if (!querySnapshot.empty) {
+          const docRef = doc(database, 'users', querySnapshot.docs[0].id);
+          await updateDoc(docRef, { 
+              headerPicture
+           })
+
+           //fetch details again
+           dispatch(fetchUserDetails(userId || ""));
+          } else {
+          Alert.alert("Error Updating Profile");
+        }
+      } catch (error:any) {
+        Alert.alert("Error Updating Profile", error.message);
+      }
+    
+  };
 
   return (
     <View style={templateStyles.container}>
-      <Image
-          source={{uri : 'https://th.bing.com/th/id/OIP.eLmLdeb-NsySeV4PkziejwHaEK?w=296&h=180&c=7&r=0&o=5&dpr=1.5&pid=1.7'}}
+        <Image
+          source={{uri : userDetails.headerPicture ? userDetails.headerPicture : Default.avatar}}
           style={{ width: '100%', height: RPH(60), position:'absolute'}}
-      />
+        />
+        <MaterialCommunityIcons name="image-edit" color="white" style={styles.headerIcon}/>
       <ScrollView showsVerticalScrollIndicator={false}>
+        <Pressable onPress={() => {pickHeader()}} style={styles.headerView} />
         <View style={styles.container}>
           <View style={styles.profileImageWrapper}>
             <Image
-              source={{uri : userDetails.displayPicture ? userDetails.displayPicture : defaultAvatar}}
+              source={{uri : userDetails.displayPicture ? userDetails.displayPicture : Default.avatar}}
               style={styles.profileImage}
             />
           </View>
@@ -183,14 +244,14 @@ export default function Profile() {
             <Pressable onPress={function(){
               setCurrentTab(Tabs.GRID)
               }} 
-              style={[styles.tab, {borderColor: `${ currentTab === Tabs.GRID ? tintColor : "lightgrey"}`}]}>
-                <Ionicons name="grid-outline" style={{fontSize: RPP(20), color: `${ currentTab === Tabs.GRID ? tintColor : "lightgrey"}`}} />
+              style={[styles.tab, {borderColor:  currentTab === Tabs.GRID ? tintColor : "lightgrey" , borderBottomWidth: currentTab === Tabs.GRID ? RPP(3) : 0 }]}>
+                <Ionicons name="grid" style={{fontSize: RPP(20), color: `${ currentTab === Tabs.GRID ? tintColor : "lightgrey"}`}} />
             </Pressable>
             <Pressable onPress={function(){
               setCurrentTab(Tabs.LIST)
               }} 
-                style={[styles.tab, {borderColor: `${ currentTab === Tabs.LIST ? tintColor : "lightgrey"}`}]}>
-              <Ionicons name="folder-outline" style={{fontSize: RPP(20), color: `${ currentTab === Tabs.LIST ? tintColor : "lightgrey"}`}}/>
+                style={[styles.tab, {borderColor:  currentTab === Tabs.LIST ? tintColor : "lightgrey",  borderBottomWidth: currentTab === Tabs.LIST ? RPP(3) : 0 }]}>
+              <Ionicons name="folder" style={{fontSize: RPP(20), color: `${ currentTab === Tabs.LIST ? tintColor : "lightgrey"}`}}/>
             </Pressable>
           </View>
           <View style={[{display: `${ currentTab === Tabs.GRID ? "flex" : "none"}`}]}>
@@ -245,4 +306,8 @@ export default function Profile() {
       {video && <UploadOverlay video={video} progress={progress}/>}
     </View>
   )
+}
+
+function manipulateAsync(arg0: any, arg1: ({ rotate: number; } | { flip: any; })[], arg2: { compress: number; format: any; }) {
+  throw new Error('Function not implemented.');
 }

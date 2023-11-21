@@ -2,7 +2,8 @@ import { View, Text } from "../Themed";
 import { Image } from "expo-image";
 import { styles } from "../stylesheet/shared/portfolioItems";
 import { RPP } from "../../utils";
-import { Video } from "expo-av";
+import { ResizeMode, Video } from "expo-av";
+import { Ionicons } from "@expo/vector-icons";
 
 function GridItem({uri, style, type}: any){
     return (
@@ -11,7 +12,6 @@ function GridItem({uri, style, type}: any){
              <Image
                 source={{uri}}
                 style={styles.image}
-                contentFit="contain"
             />
             }
             {(type === "video") &&
@@ -24,8 +24,12 @@ function GridItem({uri, style, type}: any){
                     isMuted={false}
                     shouldPlay={false}
                     isLooping={false}
+                    resizeMode={ResizeMode.COVER}
                     // useNativeControls
                 />
+            }
+            {(type === "video") &&
+                <Ionicons name="play" style={styles.playBtn}/>
             }
         </View>
     )

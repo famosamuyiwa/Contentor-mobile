@@ -3,28 +3,30 @@ import styles from './stylesheet/editProfile'
 import { Image } from "expo-image";
 import { MaterialIcons } from '@expo/vector-icons'
 import { RPP } from '../utils';
-import { Alert, KeyboardAvoidingView, Pressable, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Pressable, TouchableOpacity } from 'react-native';
 import { TitleWithInputField } from '../components/shared/title-with-inputfield';
 import { useEffect, useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import {  useRouter } from 'expo-router';
-import { auth, database } from '../config/firebase';
-import { updateProfile } from 'firebase/auth';
+import { auth, database, storage } from '../config/firebase';
 import { useSelector } from 'react-redux';
 import { RootState } from '../redux/store';
-import { User } from '../redux/slices/userSlice';
 import { collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 
 export default function EditProfile() {
   const {tintColor} = useThemeColorDefault()
-  const [image, setImage] = useState('');
   const [information, setInformation] = useState({
     username: "",
     name: "",
     bio: "",
     link: "",
-    profession: ""
+    profession: "",
+    displayPicture: ""
   })
+  const [isDisplayPictureChanged, setIsDisplayPictureChanged] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
   const router = useRouter()
   const user = auth.currentUser
 
@@ -43,15 +45,53 @@ export default function EditProfile() {
     });
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      setInformation((existingInformation) => ({...existingInformation, displayPicture: result.assets[0].uri}))
+      setIsDisplayPictureChanged(true)
     }
   };
 
+  //save display picture to bucket and get uri
+  async function uploadDisplayPicture( details: { uri: string } ) {
 
-const updateUserProfile = async () => {
-  if (user) {
+    setIsLoading(true)
+
+    //check to see if user dp was changed
+    if(!isDisplayPictureChanged){
+      return updateUserProfile("")
+    }
+
+    const response = await fetch(details.uri)
+    const blob = await response.blob()
+
+    const storageRef = ref(storage, "Stuff/" + new Date().getTime())
+    const uploadTask = uploadBytesResumable(storageRef, blob)
+
+    //listen for events
+    uploadTask.on("state_changed",
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        console.log("Progress: " + progress + "% done")
+      },
+      (error) => {
+        //handle error
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref)
+          .then(async (downloadUrl) => {
+            console.log("File available at ", downloadUrl)
+            //set display picture uri
+            await updateUserProfile(downloadUrl)
+          })
+      }
+    )
+  }
+
+
+const updateUserProfile = async (displayPictureUrl:any) => {
+    
+
     const userRef = collection(database, 'users');
-    const q = query(userRef, where("userId", "==", user.uid));
+    const q = query(userRef, where("userId", "==", user?.uid));
 
     try {
       const querySnapshot = await getDocs(q);
@@ -59,30 +99,35 @@ const updateUserProfile = async () => {
       if (!querySnapshot.empty) {
         const docRef = doc(database, 'users', querySnapshot.docs[0].id);
         await updateDoc(docRef, { 
-            ...information
+            ...information,
+            displayPicture: isDisplayPictureChanged? displayPictureUrl : information.displayPicture
          });
-        console.log("success")
-        router.back()
+         setIsLoading(false)
+         router.back()
       } else {
+        setIsLoading(false)
         Alert.alert("Error Updating Profile");
       }
     } catch (error:any) {
+      setIsLoading(false)
       Alert.alert("Error Updating Profile", error.message);
     }
-  }
+  
 };
 
-
+//preload user info
   useEffect(() => {
     if(user){
-      userDetails.displayPicture ? setImage(userDetails.displayPicture) : setImage('')
+      userDetails.displayPicture ? setInformation((existingInformation) => ({...existingInformation, displayPicture: userDetails.displayPicture})) : setInformation((prevInfo) => ({...prevInfo, displayPicture: userDetails.displayPicture}))
       setInformation({
         username: userDetails.username,
         name: userDetails.name, 
         bio: userDetails.bio || "",
         link: userDetails.link || "",
-        profession: userDetails.profession || ""
+        profession: userDetails.profession || "",
+        displayPicture: userDetails.displayPicture
       });
+      setIsDisplayPictureChanged(false)
 
     }
   }, [])
@@ -97,21 +142,26 @@ const updateUserProfile = async () => {
         <View>
           <Text style={styles.headerText}>Edit Profile</Text>
         </View>
-        <Pressable onPress={() => { updateUserProfile() }} style={styles.headerActionContainer}>
+        {!isLoading &&
+        <Pressable onPress={() => { uploadDisplayPicture({uri: information.displayPicture}) }} style={styles.headerActionContainer}>
           <Text style={[styles.headerActionText, {textAlign:"right", color: tintColor}]}>Save</Text>
         </Pressable>
+        }
+        {isLoading &&
+          <ActivityIndicator size="small" color={tintColor}/>
+        }
       </View>
       <View style={styles.profileImageContainer}>
-        <TouchableOpacity onPress={() => pickImage()} style={{display: image !== '' ? 'flex' : 'none'}}>
+        <TouchableOpacity onPress={() => pickImage()} style={{display: information.displayPicture ? 'flex' : 'none'}}>
           <View style={styles.cameraPlusIcon}>
             <MaterialIcons name="camera-enhance" style={{color: tintColor, fontSize:RPP(25)}}/>
           </View>
           <Image
-            source={{uri : image}}
+            source={{uri : information.displayPicture}}
             style={styles.profileImage}
           />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => pickImage()} style={[styles.profileDefaultImage, {display: image !== '' ? 'none' : 'flex', backgroundColor:"darkgrey"}]}>
+        <TouchableOpacity onPress={() => pickImage()} style={[styles.profileDefaultImage, {display: information.displayPicture ? 'none' : 'flex', backgroundColor:"darkgrey"}]}>
             <MaterialIcons name="camera-alt" style={[styles.cameraDefaultIcon]}/>
         </TouchableOpacity>
       </View>

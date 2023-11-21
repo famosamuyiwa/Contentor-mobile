@@ -5,9 +5,8 @@ const styles = StyleSheet.create({
     container:{
         borderTopRightRadius: RPP(24),
         width: '100%',
-        marginTop: RPH(30),
         minHeight: RPH(70),
-        paddingHorizontal: RPP(10)
+        paddingHorizontal: RPP(10),
 
     },
     profileImage:{
@@ -38,7 +37,6 @@ const styles = StyleSheet.create({
         justifyContent:"center",
         flexDirection:"row",
         paddingBottom: RPP(10),
-        borderBottomWidth: RPP(1.5)
     },
     addBtn:{
         width: RPP(50),
@@ -51,6 +49,18 @@ const styles = StyleSheet.create({
         right: RPP(20),
         shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:5,
     },
+    headerIcon:{
+        position:"absolute",
+        fontSize: RPP(30),
+        right: RPP(20),
+        top: RPP(100),
+        shadowOffset:{ width:0, height:2 }, shadowOpacity:0.25, shadowRadius:5,
+
+    },
+    headerView:{
+        height: RPH(30),
+        backgroundColor: "rgba(0,0,0,0)"
+    }
 })
 
 export default styles
