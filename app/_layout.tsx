@@ -58,6 +58,8 @@ function RootLayoutNav() {
         <Stack.Screen name="index" options={{ title: "Home", headerShown: false }}/>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }}/>
         <Stack.Screen name="editProfile" options={{ headerShown: false, presentation:"modal" }}/>
+        <Stack.Screen name="uploadOverview" options={{ headerShown: false, presentation:"fullScreenModal" }}/>
+        <Stack.Screen name="[userId]" options={{ headerShown: false}}/>
       </Stack>
       </ReduxProvider>
     </ThemeProvider>

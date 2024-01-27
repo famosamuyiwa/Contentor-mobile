@@ -1,15 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit"
 
-export type User = {
-    username: string,
-    displayPicture: string,
-    headerPicture: string
-    name: string,
-    bio?: string,
-    link?: string,
-    profession?: string
-}
-
 export type UserListState = {
     users: User[],
     loading: boolean,

@@ -15,6 +15,7 @@ export default {
     buttonBackgroundInactive: "#ccc",
     modalTitleBackground:"#fff",
     modalContentBackground: "#fff",
+    searchBarBackground: "#eee"
   },
 
   dark: {
@@ -29,6 +30,8 @@ export default {
     borderColor: '#ccc',
     buttonBackgroundInactive: "#a1a1a1",
     modalTitleBackground: "#464C55",
-    modalContentBackground: "#25292e"
+    modalContentBackground: "#25292e",
+    searchBarBackground: "#25292e"
+
   },
 };

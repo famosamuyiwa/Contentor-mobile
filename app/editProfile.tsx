@@ -106,11 +106,11 @@ const updateUserProfile = async (displayPictureUrl:any) => {
          router.back()
       } else {
         setIsLoading(false)
-        Alert.alert("Error Updating Profile");
+        return Alert.alert("Error Updating Profile");
       }
     } catch (error:any) {
       setIsLoading(false)
-      Alert.alert("Error Updating Profile", error.message);
+      return Alert.alert("Error Updating Profile", error.message);
     }
   
 };

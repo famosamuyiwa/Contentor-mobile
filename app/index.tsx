@@ -254,7 +254,7 @@ export default function AuthScreen() {
                     </Pressable>
                 </View>
                 <View style={styles.container2}>
-                    <Text style={styles.heading}>Sign in to Contentor</Text>
+                    <Text style={styles.heading}>Sign in to Percher</Text>
                     <Text style={styles.subheading}>Enter your details</Text>
                     <View style={{marginBottom: RPP(10)}}>
                         <TextField 

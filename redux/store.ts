@@ -1,10 +1,12 @@
 import { combineReducers, configureStore } from '@reduxjs/toolkit'
 import userSlice from './slices/userSlice'
 import userListSlice from './slices/userListSlice'
+import uploadSlice from './slices/uploadSlice'
 
 const rootReducer = combineReducers({
     user: userSlice,
-    userList: userListSlice
+    userList: userListSlice,
+    upload: uploadSlice
 })
 
 export type RootState = ReturnType<typeof rootReducer>

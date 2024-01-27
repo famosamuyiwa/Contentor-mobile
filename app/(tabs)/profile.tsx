@@ -7,21 +7,25 @@ import styles from '../stylesheet/tabs/profile';
 import { Ionicons, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons'
 import { useCallback, useEffect, useState } from 'react';
 import { ListItem, GridItem } from '../../components/shared/portfolioItems';
-import { Link } from 'expo-router';
-import { auth, database, storage } from '../../config/firebase';
+import { Link, router } from 'expo-router';
+import { auth, database } from '../../config/firebase';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserDetails } from '../../redux/thunks/userThunk';
 import { Dispatch } from '@reduxjs/toolkit';
-import { RootState } from '../../redux/store';
 import { useFocusEffect } from '@react-navigation/native';
-import * as MediaPicker from 'expo-image-picker';
-import Multimedia from '../../constants/Media';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import UploadOverlay from '../../components/shared/upload-overlay-mock';
-import { addDoc, collection, doc, getDocs, onSnapshot, orderBy, query, updateDoc, where } from 'firebase/firestore';
-import * as ImagePicker from 'expo-image-picker';
+import { collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import Default from '../../constants/Default';
 import Tabs from '../../constants/Tabs';
+import usePortfolioItems from '../../hooks/usePortfolioItems';
+import useUserDetails from '../../hooks/useUserDetails';
+import useImagePicker from '../../hooks/useImagePicker';
+import useFilePicker from '../../hooks/useFilePicker';
+import Multimedia from '../../constants/Media';
+import useFirestore from '../../hooks/useFirestore';
+import { clearUploadData, saveUploadData } from '../../redux/slices/uploadSlice';
+import useStorageBucket from '../../hooks/useStorageBucket';
+import { RootState } from '../../redux/store';
 
 
 export default function Profile() {
@@ -30,179 +34,174 @@ export default function Profile() {
   const userId = auth.currentUser?.uid
   const dispatch: Dispatch<any> = useDispatch();
   const [currentTab, setCurrentTab] = useState(Tabs.GRID)
-  const [image, setImage] = useState("")
-  const [video, setVideo] = useState("")
-  const [progress, setProgress] = useState(0)
-  const [portfolioGridItems, setPortfolioGridItems] = useState<PortfolioItem[]>([])
-  const [portfolioListItems, setPortfolioListItems] = useState<PortfolioItem[]>([])
+  const uploadData:any = useSelector((state:RootState) => state.upload.data);
 
-  const userDetails: User = useSelector((state: RootState) => state.user.user[0]) || [];
-  const loading = useSelector((state: RootState) => state.user.loading);
-  const error = useSelector((state: RootState) => state.user.error);
+  const { portfolioGridItems, portfolioListItems } = usePortfolioItems(userId || "")
+  const { image, video, pickMultimedia, progress: multimediaProgress, setImage, setVideo } = useImagePicker()
+  const { audios, docs, pickFiles, progress: fileProgress, setAudios, setDocs } = useFilePicker()
+  const { saveMultimediaToDB } = useFirestore()
+  const { userDetails, isUserDetailsLoading, isUserDetailsError } = useUserDetails()
+  const { uploadMultimedia, progress } = useStorageBucket()
 
   //refetch user details on screen show
   useFocusEffect(
     useCallback(() => {
       dispatch(fetchUserDetails(userId || ""));
     }, [dispatch, userId])
-  );
+  )
 
   useEffect(() => {
-    //get data back immediately it has been saved to db
-    const portfolioRef = collection(database, "portfolio")
-    const q = query(portfolioRef, where("userId", "==", userId), orderBy('createdAt', 'asc'));
+    if(uploadData.save){
+      (uploadData.fileType === "image") || (uploadData.fileType === "video") ? handleMediaUpload(uploadData) : handleFileUpload(uploadData)
+    }
+  }, [uploadData])
+  
+//------------------------------------------------------------------------------
+const handleHeaderUpdate = async () => {
+  
+  //if user is logged in
+  if(userId){
+    
+    //save file to bucket and return url details
+    const bucketDetails: any = await pickMultimedia(Multimedia.IMAGE_VIDEO, true)
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newMedia: PortfolioItem[] = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        userId: doc.data().userId,
-        fileType: doc.data().fileType,
-        url: doc.data().url,
-        createdAt: doc.data().createdAt
-      }));
+    const userRef = collection(database, 'users');
+    const q = query(userRef, where("userId", "==", userId));
 
+    console.log(bucketDetails)
+    try {
+      const querySnapshot = await getDocs(q);
 
-      setPortfolioGridItems(newMedia.filter(item => item.fileType === 'image' || item.fileType === 'video'))
-      setPortfolioListItems(newMedia.filter(item => item.fileType === ''))
+      if (!querySnapshot.empty) {
+        const docRef = doc(database, 'users', querySnapshot.docs[0].id);
+        await updateDoc(docRef, { 
+            headerPicture: bucketDetails.downloadUrl
+         })
 
-    })
-
-    //unmount to avoid performance issues
-    return () => unsubscribe()
-
-  }, [])
- 
-
-  async function pickMultimedia(type:any){
-      if(type===Multimedia.IMAGE_VIDEO){
-           // No permissions request is necessary for launching the image library
-        let result:any = await MediaPicker.launchImageLibraryAsync({
-          mediaTypes: MediaPicker.MediaTypeOptions.All,
-          quality: 1
-        });
-        if (!result.canceled) {
-          result.assets[0].type === "image" ? setImage(result.assets[0].uri) : setVideo(result.assets[0].uri);
-          await uploadMultimedia({
-            uri: result.assets[0].uri,
-            fileType: result.assets[0].type
-          })
-        }
+         //fetch details again
+         dispatch(fetchUserDetails(userId));
+        } else {
+        return Alert.alert("Error Updating Profile");
       }
-  };
+    } catch (error:any) {
+      return Alert.alert("Error Updating Profile", error.message);
+    }
+  }
+  else{
+    console.log("No user is logged in")
+  }
+}
 
-  async function uploadMultimedia( details: any ) {
-    const response = await fetch(details.uri)
-    const blob = await response.blob()
-
-    const storageRef = ref(storage, "Stuff/" + new Date().getTime())
-    const uploadTask = uploadBytesResumable(storageRef, blob)
-
-    //listen for events
-    uploadTask.on("state_changed",
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-        console.log("Progress: " + progress + "% done")
-        setProgress(parseInt(progress.toFixed()))
+//------------------------------------------------------------------------------
+const handleMediaUpload = async (details: any) => {
+  
+  //if user is logged in
+  if(userId){
+    
+    await uploadMultimedia(
+      {
+        uri: details.uri,
+        fileType: details.fileType
       },
-      (error) => {
-        //handle error
-      },
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref)
-          .then(async (downloadUrl) => {
-            console.log("File available at ", downloadUrl)
-            //save record
-            await saveMultimediaToDB(details.fileType, downloadUrl, new Date().toISOString())
-            setImage("")
-            setVideo("")
-          })
+      function (downloadUrl: string) {
+        setImage(""); // Clearing the docs array after upload
+        setVideo(""); // Clearing the audios array after upload
+        saveToDB(downloadUrl)
       }
     )
-  }
 
-  async function saveMultimediaToDB(fileType:string, url:string, createdAt:string){
-    try{
-        // Add media to multimedia collection
-        await addDoc(collection(database, 'portfolio'), {
-          userId: auth.currentUser?.uid,
-          fileType,
-          url,
-          createdAt
-        });    
-    }catch(err:any){
-      Alert.alert("Error saving media:", err)
+    const afterSave = () => {
+      dispatch(clearUploadData()) 
+    }
+
+    const saveToDB = async (downloadUrl:string) => {
+      const mediaDetails: MediaUpload = {
+        userId,
+        fileType: details.fileType,
+        url: downloadUrl,
+        createdAt: new Date().toISOString(),
+        description: details.description,
+        coverUrl: details.coverUrl || ""
+      }
+    
+      //upload file to db
+      await saveMultimediaToDB("portfolio", mediaDetails, afterSave);
     }
   }
+  else{
+    console.log("No user is logged in")
+  }
+}
 
-  const pickHeader = async () => {
-    // No permissions request is necessary for launching the image library
-    let result:any = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+//------------------------------------------------------------------------------
+const onAddBtnClick = async () => {
 
-    if (!result.canceled) {
-      await uploadHeaderPicture({uri : result.assets[0].uri})
+    //pick media and return local url details
+    const details = currentTab === Tabs.GRID ? await pickMultimedia(Multimedia.IMAGE_VIDEO, false) : await pickFiles(Multimedia.AUDIO_DOC, false)
+
+    dispatch(saveUploadData(details))
+
+    router.push('/uploadOverview')
+
+}
+
+const handleFileUpload = async (details:any) => {
+  if(userId){
+
+
+    await uploadMultimedia(
+      {
+        uri: details.uri,
+        fileType: details.fileType
+      },
+      function (downloadUrl: string) {
+        setDocs([]); // Clearing the docs array after upload
+        setAudios([]); // Clearing the audios array after upload
+        
+        if(details.coverUrl){
+          uploadCoverUrl(downloadUrl)
+        }else{
+          saveToDB(downloadUrl)
+        }
+      }
+    )
+   
+    const afterSave = () => {
+      dispatch(clearUploadData()) 
     }
-  };
 
-    //save header picture to bucket and get uri
-    async function uploadHeaderPicture( details: any ) {
-      const response = await fetch(details.uri)
-      const blob = await response.blob()
-  
-      const storageRef = ref(storage, "Stuff/" + new Date().getTime())
-      const uploadTask = uploadBytesResumable(storageRef, blob)
-  
-      //listen for events
-      uploadTask.on("state_changed",
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
-          console.log("Progress: " + progress + "% done")
+    const saveToDB = async (downloadUrl:string, coverDownloadUrl?:string) => {
+      const fileDetails: MediaUpload = {
+        userId,
+        fileType: details.fileType,
+        url: downloadUrl,
+        createdAt: new Date().toISOString(),
+        description: details.description,
+        coverUrl: coverDownloadUrl || ""
+      }
+    
+      //upload file to db
+      await saveMultimediaToDB("portfolio", fileDetails, afterSave);
+    }
+
+    const uploadCoverUrl = async (downloadUrl:string) => {
+      await uploadMultimedia(
+        {
+          uri: details.coverUrl,
+          fileType: "image"
         },
-        (error) => {
-          //handle error
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref)
-            .then(async (downloadUrl) => {
-              console.log("File available at ", downloadUrl)
-              //set display picture uri
-              updateHeader(downloadUrl)
-            })
+        function (coverDownloadUrl: string) {
+          saveToDB(downloadUrl, coverDownloadUrl)
         }
       )
     }
+  }
+  else{
+    console.log("no user is logged in")
+  }
+}
 
-  //update header in db
-  const updateHeader = async (headerPicture : string) => {
-
-      const userRef = collection(database, 'users');
-      const q = query(userRef, where("userId", "==", userId));
-  
-      try {
-        const querySnapshot = await getDocs(q);
-  
-        if (!querySnapshot.empty) {
-          const docRef = doc(database, 'users', querySnapshot.docs[0].id);
-          await updateDoc(docRef, { 
-              headerPicture
-           })
-
-           //fetch details again
-           dispatch(fetchUserDetails(userId || ""));
-          } else {
-          Alert.alert("Error Updating Profile");
-        }
-      } catch (error:any) {
-        Alert.alert("Error Updating Profile", error.message);
-      }
-    
-  };
-
-  return (
+  return (  
     <View style={templateStyles.container}>
         <Image
           source={{uri : userDetails.headerPicture ? userDetails.headerPicture : Default.avatar}}
@@ -210,7 +209,7 @@ export default function Profile() {
         />
         <MaterialCommunityIcons name="image-edit" color="white" style={styles.headerIcon}/>
       <ScrollView showsVerticalScrollIndicator={false}>
-        <Pressable onPress={() => {pickHeader()}} style={styles.headerView} />
+        <Pressable onPress={() => {handleHeaderUpdate()}} style={styles.headerView} />
         <View style={styles.container}>
           <View style={styles.profileImageWrapper}>
             <Image
@@ -279,11 +278,12 @@ export default function Profile() {
               style={{marginBottom: RPP(10), display: portfolioListItems? "flex" : "none"}}
               showsVerticalScrollIndicator={false}
               data={portfolioListItems}
+              keyExtractor={(item) => item.url}
               renderItem={({item, index}) => <ListItem 
-                                        title={"test"}
-                                        uri={"test"}
+                                        title={item.description}
+                                        uri={item.coverUrl ? item.coverUrl : item.url}
                                         style={{
-                                                marginTop:  index === 0 ? RPP(10) : 0, // Add top margin to first item
+                                                marginTop:  index === 0 ? RPP(10) : 1, // Add top margin to first item
                                                 paddingVertical:  RPP(10) // Add vertical padding to all
                                               }}
                                        />
@@ -297,17 +297,16 @@ export default function Profile() {
           </View>
         </View>    
       </ScrollView>
-      <TouchableHighlight onPress={() => { pickMultimedia("IMAGE_VIDEO")}}>
+      <TouchableHighlight onPress={() => {  onAddBtnClick() }}>
         <View style={[styles.addBtn, {backgroundColor: tintColor}]}>
               <Text style={{color: "white", fontSize:RPP(30)}}>+</Text>
         </View>
       </TouchableHighlight>
-      {image && <UploadOverlay image={image} progress={progress}/>}
-      {video && <UploadOverlay video={video} progress={progress}/>}
+      {uploadData.fileType === "image" && <UploadOverlay image={uploadData.uri} progress={multimediaProgress}/>} 
+      {uploadData.fileType === "video" && <UploadOverlay video={uploadData.uri} progress={multimediaProgress}/>}
+      {uploadData.fileType === "application/pdf" && <UploadOverlay image={uploadData.coverUrl ? uploadData.coverUrl : uploadData.uri} progress={fileProgress}/>}
+      {uploadData.fileType === "audio" && <UploadOverlay image={uploadData.coverUrl} progress={fileProgress}/>} 
     </View>
   )
 }
 
-function manipulateAsync(arg0: any, arg1: ({ rotate: number; } | { flip: any; })[], arg2: { compress: number; format: any; }) {
-  throw new Error('Function not implemented.');
-}

@@ -43,6 +43,7 @@ export function useThemeColorDefault(){
   const borderColorFocused = useThemeColor({}, 'focus')
   const modalContentBackground = useThemeColor({}, 'modalContentBackground')
   const modalTitleBackground = useThemeColor({}, 'modalTitleBackground')
+  const searchBarBackground = useThemeColor({}, 'searchBarBackground')
 
   return {
     textColor,
@@ -53,7 +54,8 @@ export function useThemeColorDefault(){
     buttonTextColor,
     borderColorFocused,
     modalContentBackground,
-    modalTitleBackground
+    modalTitleBackground,
+    searchBarBackground
   }
 }
 

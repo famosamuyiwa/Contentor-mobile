@@ -43,6 +43,9 @@ const useGiftedChat = () => {
             createdAt: message.createdAt,
             text: message.text,
             user: message.user,
+            sent: true,
+            received: true,
+            pending: true,
           });
         }
       },

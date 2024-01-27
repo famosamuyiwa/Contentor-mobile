@@ -25,7 +25,7 @@ export default function _layout() {
                     }
                     else if (route.name === 'profile') {
                       return <ProfileTabIcon focused={focused} color={color} size={size}/>
-                    }else if (route.name === 'messages'){
+                    }else if (route.name === 'chat'){
                       iconName = "mail"
                       return <Foundation name={iconName} size={size+RPP(5)} color={color} />;
                     }
@@ -40,13 +40,14 @@ export default function _layout() {
                 tabBarLabel: "Home"
             }} 
             />
-            <Tabs.Screen name="messages" options={{
+            <Tabs.Screen name="chat" options={{
                 headerShown: false,
-                headerTitle: "Messages",
-                tabBarLabel: "Messages"
+                headerTitle: "Chat",
+                tabBarLabel: "Chat"
             }} 
             />
             <Tabs.Screen name="search" options={{
+                headerShown: false,
                 headerTitle: "Search",
                 tabBarLabel: "Search"
             }} 

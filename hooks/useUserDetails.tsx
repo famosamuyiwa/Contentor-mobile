@@ -6,7 +6,7 @@ const useUserDetails = () => {
     const isUserDetailsLoading = useSelector((state: RootState) => state.user.loading);
     const isUserDetailsError = useSelector((state: RootState) => state.user.error);
 
-    return { userDetails, isUserDetailsLoading, isUserDetailsError}
+    return { userDetails, isUserDetailsLoading, isUserDetailsError }
 }
 
 export default useUserDetails
